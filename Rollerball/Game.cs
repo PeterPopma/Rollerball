@@ -158,7 +158,6 @@ namespace Rollerball
             System.Runtime.InteropServices.Marshal.Copy(textureData, 0, safePtr, textureData.Length);
             bmp.UnlockBits(bmpData);
 
-            // just some test output
             bmp.Save(filename, System.Drawing.Imaging.ImageFormat.Png);
         }
 
