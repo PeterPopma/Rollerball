@@ -898,6 +898,7 @@ namespace Rollerball
                 {
                     // Cancel the request to restart
                     gameState = GameState.PLAYING;
+
                 }
             }
             if (gameState.Equals(GameState.SHOWHIGHSCORES))
