@@ -199,7 +199,7 @@ namespace Rollerball
             y = yInitial = y_;
             xSpeed = xSpeedInitial = xSpeed_;
             ySpeed = ySpeedInitial = ySpeed_;
-            Lifetime = 2000;
+            Lifetime = 1800;
             texture = texture_;
             delay = delay_;
             sound = sound_;

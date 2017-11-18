@@ -36,6 +36,7 @@ namespace Rollerball
         GameState gameState = GameState.SHOWHIGHSCORES;
         const int MAX_PLAYERS = 4;
         const int X_STARTVALUE = 4;
+        const int SPEED_MULTIPLIER = 3;
         int winningPlayerNumber;
         int numPlayersFinished;
         private List<Player> players = new List<Player>();
@@ -63,7 +64,12 @@ namespace Rollerball
         Texture2D textureArrow;
         Texture2D textureGeenArduino;
         Texture2D textureGewonnen;
+        Texture2D textureShattered;
         Texture2D[] textureMatrix;
+        List<ShatteredPart> shattersBird;
+        List<ShatteredPart> shattersDog;
+        List<ShatteredPart> shattersTurtle;
+        List<ShatteredPart> shattersElephant;
         private SoundEffect soundEffectPoing;
         private SoundEffect soundEffectLaugh;
         private SoundEffect soundEffectPop;
@@ -75,11 +81,16 @@ namespace Rollerball
         static SerialPort serialPort;
         List<Ball> balls = new List<Ball>();
         int secondsPlotted;
+        List<ShatteredPart> shatters = new List<ShatteredPart>();
         List<Highscore> highscoresDay = new List<Highscore>();
         List<Highscore> highscoresMonth = new List<Highscore>();
         List<Highscore> highscoresAll = new List<Highscore>();
         double requestRestartTime;
         bool enterPressed;
+        bool pressedA;
+        bool pressedS;
+        bool pressedD;
+        bool pressedF;
         Font fontNormal;
         Font fontScore;
         int scoreYPosition;
@@ -92,6 +103,7 @@ namespace Rollerball
         static Random rand = new Random();
         ParticleManager<ParticleState> particleManager;
         SmokePlumeParticleSystem smokePlume;
+        bool receivedResetSignal = false;
 
         [DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndIntertAfter, int X, int Y, int cx, int cy, int uFlags);
@@ -120,12 +132,12 @@ namespace Rollerball
             graphics.PreferredBackBufferWidth = 1920;
             graphics.IsFullScreen = false;      // note: when using windows controls we can't use this option to go fullscreen.
             graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
-            
+            /*
             Form.FromHandle(Window.Handle).FindForm().WindowState = FormWindowState.Maximized;
             Form.FromHandle(Window.Handle).FindForm().FormBorderStyle = FormBorderStyle.None;
             Form.FromHandle(Window.Handle).FindForm().TopMost = true;
-            SetWindowPos(Window.Handle, IntPtr.Zero, 0, 0, GetSystemMetrics(0), GetSystemMetrics(1), 64);
-            
+            SetWindowPos(Window.Handle, IntPtr.Zero, 0, 0, GetSystemMetrics(0), GetSystemMetrics(1), 64);            
+            */
         }
 
         Highscore ReadHighscore(StreamReader srFile)
@@ -388,11 +400,14 @@ namespace Rollerball
 
         void UpdateChart()
         {
-            if (GameTimeMilliSeconds % 30000 > 20000 && videoPlayer.State != MediaState.Playing)
+            if (GameTimeMilliSeconds % 30000 > 500)               
             {
-                chart.Visible = true;
-                chart.Invalidate();
-                chart.BringToFront();
+                if(chart.Visible == false && videoPlayer.State != MediaState.Playing)
+                {
+                    chart.Visible = true;
+                    chart.Invalidate();
+                    chart.BringToFront();
+                }
             }
             else
                 chart.Visible = false;
@@ -436,7 +451,6 @@ namespace Rollerball
         /// </summary>
         protected override void Initialize()
         {
-            InitChart();
             Control.FromHandle(Window.Handle).Controls.Add(chart);
 
             serialPort = new SerialPort();
@@ -444,8 +458,12 @@ namespace Rollerball
             foreach (string s in SerialPort.GetPortNames())
             {
                 Console.WriteLine("   {0}", s);
+                if(!s.Equals("COM1"))
+                {
+                    serialPort.PortName = s;
+                }
             }
-            serialPort.PortName = "COM7";
+            Console.WriteLine("Using port: {0}", serialPort.PortName);
 
             // Set the read/write timeouts
             serialPort.ReadTimeout = SerialPort.InfiniteTimeout;
@@ -478,53 +496,52 @@ namespace Rollerball
         {
             SerialPort sp = (SerialPort)sender;
             int bytes = serialPort.BytesToRead;
-
             try
             {
                 while (bytes > 0)     // if there is data in the buffer
                 {
+                    bytes--;
                     int data = serialPort.ReadByte();
-
                     switch (data)
                     {
-                        case 49:        // 1
+                        case 65:
                             AddScore(0, 1);
                             break;
-                        case 50:        // 2
-                            AddScore(1, 1);
+                        case 66:
+                            AddScore(0, 2);
                             break;
-                        case 51:        // 3
-                            AddScore(2, 1);
-                            break;
-                        case 52:        // 4
-                            AddScore(3, 1);
-                            break;
-                        case 53:        // 5
-                            // comes always as first character (?)
-                            break;
-                        case 54:        // 6
-                            AddScore(1, 2);
-                            break;
-                        case 55:        // 7
-                            AddScore(2, 2);
-                            break;
-                        case 56:        // 8
-                            AddScore(3, 2);
-                            break;
-                        case 57:        // 9
+                        case 67:
                             AddScore(0, 3);
                             break;
-                        case 58:       
+                        case 68:
+                            AddScore(1, 1);
+                            break;
+                        case 69:
+                            AddScore(1, 2);
+                            break;
+                        case 70:
                             AddScore(1, 3);
                             break;
-                        case 59:       
+                        case 71:
+                            AddScore(2, 1);
+                            break;
+                        case 72:
+                            AddScore(2, 2);
+                            break;
+                        case 73:
                             AddScore(2, 3);
                             break;
-                        case 60:      
+                        case 74:
+                            AddScore(3, 1);
+                            break;
+                        case 75:
+                            AddScore(3, 2);
+                            break;
+                        case 76:
                             AddScore(3, 3);
                             break;
-                        case 61:        // 5
-                            AddScore(0, 2);
+                        case 80:        // Reset game
+                            receivedResetSignal = true;
                             break;
                     }
                 }
@@ -567,6 +584,12 @@ namespace Rollerball
             textureArrow = Content.Load<Texture2D>("arrow");
             textureGeenArduino = Content.Load<Texture2D>("geenarduino");
             textureGewonnen = Content.Load<Texture2D>("gewonnen");
+            textureShattered = Content.Load<Texture2D>("shattered");
+
+            shattersBird = Shattered.CreateShatteredParts(GraphicsDevice, textureBallBird, textureShattered);
+            shattersDog = Shattered.CreateShatteredParts(GraphicsDevice, textureBallDog, textureShattered);
+            shattersTurtle = Shattered.CreateShatteredParts(GraphicsDevice, textureBallTurtle, textureShattered);
+            shattersElephant = Shattered.CreateShatteredParts(GraphicsDevice, textureBallElephant, textureShattered);
 
             textureMatrix = new Texture2D[10];
             for (int k = 0; k < 10; k++)
@@ -605,6 +628,7 @@ namespace Rollerball
             scoreListType = 0;
             scoreListElapsed = 0;
             scoreYPosition = 0;
+            InitChart();
         }
 
         /// <summary>
@@ -620,9 +644,15 @@ namespace Rollerball
 
         private void AddScore(int playerNumber, int score)
         {
-            if(!gameState.Equals(GameState.PLAYING))
+            if (!gameState.Equals(GameState.PLAYING))
             {
                 return;
+            }
+
+            players[playerNumber].Score += (score * SPEED_MULTIPLIER);
+            if (players[playerNumber].Score > 44)
+            {
+                players[playerNumber].Score = 44;
             }
 
             if (players[playerNumber].X > 1800)
@@ -630,25 +660,20 @@ namespace Rollerball
                 return;
             }
 
-            players[playerNumber].Score += score;
-            if (players[playerNumber].Score > 44)
+            for (int k = 0; k < score; k++)
             {
-                players[playerNumber].Score = 44;
-            }
-
-            players[playerNumber].Moving += score*40;
-
-            for (int k=0; k<score; k++)
-            {
-                if(k==0)
+                if (k == 0)
                 {
-                    balls.Add(new Ball(-100 - (playerNumber*180), 950, 18, -20, players[playerNumber].TextureBall, 0, score, players[playerNumber].Color));
+                    balls.Add(new Ball(-100 - (playerNumber * 180), 950, 18, -20, players[playerNumber].TextureBall, 0, score, players[playerNumber].Color));
                 }
                 else
                 {
-                    balls.Add(new Ball(-100 - (playerNumber*180), 950, 18, -20, players[playerNumber].TextureBall, k*15, 0, players[playerNumber].Color));
+                    balls.Add(new Ball(-100 - (playerNumber * 180), 950, 18, -20, players[playerNumber].TextureBall, k * 15, 0, players[playerNumber].Color));
                 }
             }
+
+            players[playerNumber].Moving += score*40*SPEED_MULTIPLIER;
+
         }
 
         private void CreateFirework(Vector2 Position)
@@ -751,7 +776,7 @@ namespace Rollerball
                         if (ball.Delay == 0)
                         {
                             ball.X += ball.XSpeed;
-                            if (ball.X > 1700)
+                            if (ball.X > 1500)
                             {
                                 ball.Lifetime = 0;
                             }
@@ -774,9 +799,10 @@ namespace Rollerball
                     }
 
                 }
-                else
+                else   // Explode
                 {
-                    Vector2 position = new Vector2(ball.X, ball.Y);
+                    Explode(ball);
+                    Vector2 position = new Vector2(ball.X+150, ball.Y);
                     smokePlume.AddParticles(position,ball.Color);
 
                     if (ball.Sound == 1)
@@ -792,6 +818,60 @@ namespace Rollerball
                         soundEffectLaugh.Play();
                     }
                     balls.RemoveAt(i);
+                }
+            }
+        }
+
+        private void Explode(Ball ball)
+        {
+            List<ShatteredPart> newShatters = null;
+            if(ball.Texture.Equals(textureBallBird))
+            {
+                newShatters = shattersBird;
+            }
+            if (ball.Texture.Equals(textureBallDog))
+            {
+                newShatters = shattersDog;
+            }
+            if (ball.Texture.Equals(textureBallElephant))
+            {
+                newShatters = shattersElephant;
+            }
+            if (ball.Texture.Equals(textureBallTurtle))
+            {
+                newShatters = shattersTurtle;
+            }
+
+            foreach(ShatteredPart shatter in newShatters)
+            {
+                int xToCenter = (ball.Texture.Width/2) - (shatter.XOffset + (shatter.Texture.Width/2));
+                int yToCenter = (ball.Texture.Height/2) - (shatter.YOffset + (shatter.Texture.Height / 2));
+                ShatteredPart newShatter = new ShatteredPart();
+                newShatter.X = (int)ball.X + shatter.XOffset;
+                newShatter.Y = (int)ball.Y + shatter.YOffset;
+                newShatter.XSpeed = rand.NextFloat(3.0f, 8.0f) - xToCenter/20.0f;
+                newShatter.YSpeed = -15.0f;
+                newShatter.Texture = shatter.Texture;
+                newShatter.RotationSpeed = rand.NextFloat(-0.05f, 0.05f);
+                shatters.Add(newShatter);
+            }
+        }
+
+        private void UpdateShatters()
+        {
+            for (int i = 0; i < shatters.Count; i++)
+            {
+                ShatteredPart shatter = shatters[i];
+                if(shatter.Y<1080)
+                {
+                    shatter.Angle += shatter.RotationSpeed;
+                    shatter.YSpeed += 0.4f;
+                    shatter.Y += shatter.YSpeed;
+                    shatter.X += shatter.XSpeed;
+                }
+                else
+                { 
+                    shatters.RemoveAt(i);
                 }
             }
         }
@@ -815,6 +895,7 @@ namespace Rollerball
             AddRandomBalls();
             UpdatePlayers();
             UpdateBalls();
+            UpdateShatters();
         }
 
         /// <summary>
@@ -853,9 +934,47 @@ namespace Rollerball
                 enterPressed = false;
             }
 
-            if (!enterPressed && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter))
+            if (!pressedA && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.A))
+            {
+                pressedA = true;
+                AddScore(0, 1);
+            }
+            if (pressedA && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.A))
+            {
+                pressedA = false;
+            }
+            if (!pressedS && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.S))
+            {
+                pressedS = true;
+                AddScore(1, 1);
+            }
+            if (pressedS && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.S))
+            {
+                pressedS = false;
+            }
+            if (!pressedD && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.D))
+            {
+                pressedD = true;
+                AddScore(2, 1);
+            }
+            if (pressedD && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.D))
+            {
+                pressedD = false;
+            }
+            if (!pressedF && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.F))
+            {
+                pressedF = true;
+                AddScore(3, 1);
+            }
+            if (pressedF && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.F))
+            {
+                pressedF = false;
+            }
+
+            if (receivedResetSignal || (!enterPressed && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter)))
             {
                 enterPressed = true;
+                receivedResetSignal = false;
                 if (gameState.Equals(GameState.REQUESTRESTART))
                 {
                     ResetPlayers();
@@ -983,6 +1102,10 @@ namespace Rollerball
                 {
                     // ball yspeed: -20..22
                     SpriteBatch.Draw(ball.Texture, new Microsoft.Xna.Framework.Rectangle(Convert.ToInt32(ball.X), Convert.ToInt32(ball.Y), Convert.ToInt32(ball.Texture.Width * (1 + (Math.Abs(ball.YSpeed) / 180.0f))), Convert.ToInt32(ball.Texture.Height * (1 - (Math.Abs(ball.YSpeed) / 180.0f)))), new Microsoft.Xna.Framework.Rectangle(0, 0, ball.Texture.Width, ball.Texture.Height), Microsoft.Xna.Framework.Color.White, ballRotation, new Vector2(ball.Texture.Width / 2, ball.Texture.Height / 2), SpriteEffects.None, 0f);
+                }
+                foreach (ShatteredPart shatter in shatters.ToList())
+                {
+                    SpriteBatch.Draw(shatter.Texture, new Vector2(shatter.X, shatter.Y), new Microsoft.Xna.Framework.Rectangle(0, 0, shatter.Texture.Width, shatter.Texture.Height), Microsoft.Xna.Framework.Color.White, shatter.Angle, new Vector2(0,0), 1.0f, SpriteEffects.None, 0f);
                 }
             }
 
@@ -1172,6 +1295,15 @@ namespace Rollerball
             {
                 SpriteBatch.Draw(textureGeenArduino, new Vector2(700, 50), new Microsoft.Xna.Framework.Rectangle(0, 0, textureGeenArduino.Width, textureGeenArduino.Height), Microsoft.Xna.Framework.Color.White);
             }
+            /*
+            for(int k=0; k< shattersElephant.Count; k++)
+            {
+                SpriteBatch.Draw(shattersElephant[k].Texture, new Vector2(400+ shattersElephant[k].XOffset, 400+ shattersElephant[k].YOffset), new Microsoft.Xna.Framework.Rectangle(0, 0, shattersElephant[k].Texture.Width, shattersElephant[k].Texture.Height), Microsoft.Xna.Framework.Color.White);
+            }
+            for (int k = 0; k < shattersTurtle.Count; k++)
+            {
+                SpriteBatch.Draw(shattersTurtle[k].Texture, new Vector2(800 + shattersTurtle[k].XOffset, 400 + shattersTurtle[k].YOffset), new Microsoft.Xna.Framework.Rectangle(0, 0, shattersTurtle[k].Texture.Width, shattersTurtle[k].Texture.Height), Microsoft.Xna.Framework.Color.White);
+            }*/
 
             SpriteBatch.End();
 
