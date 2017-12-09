@@ -11,6 +11,7 @@ using System.Linq;
 using System.Windows.Forms;
 using static Rollerball.ParticleState;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Rollerball
 {
@@ -36,13 +37,15 @@ namespace Rollerball
         GameState gameState = GameState.SHOWHIGHSCORES;
         const int MAX_PLAYERS = 4;
         const int X_STARTVALUE = 4;
-        const int SPEED_MULTIPLIER = 3;
+        const int SPEED_MULTIPLIER = 1;
         int winningPlayerNumber;
         int numPlayersFinished;
         private List<Player> players = new List<Player>();
         Video video;
+        Video videoBackground;
         Microsoft.Xna.Framework.Media.VideoPlayer videoPlayer;
-        bool playingVideo = false;
+        Microsoft.Xna.Framework.Media.VideoPlayer videoPlayerBackground;
+        bool playingVideoWinner = false;
         Texture2D textureBackground;
         Texture2D textureBackgroundHighscores;
         Texture2D textureFont;
@@ -391,6 +394,11 @@ namespace Rollerball
             chart.TabIndex = 9;
             chart.Text = "chart2";
             chart.Visible = false;
+            Control.FromHandle(Window.Handle).Controls.Add(chart);
+        }
+
+        void ResetChart()
+        {
             chart.Series["Olifant"].Points.Clear();
             chart.Series["Schildpad"].Points.Clear();
             chart.Series["Vogel"].Points.Clear();
@@ -400,9 +408,9 @@ namespace Rollerball
 
         void UpdateChart()
         {
-            if (GameTimeMilliSeconds % 30000 > 500)               
+            if (GameTimeMilliSeconds % 30000 > 20000)               
             {
-                if(chart.Visible == false && videoPlayer.State != MediaState.Playing)
+                if(chart.Visible == false)
                 {
                     chart.Visible = true;
                     chart.Invalidate();
@@ -451,8 +459,6 @@ namespace Rollerball
         /// </summary>
         protected override void Initialize()
         {
-            Control.FromHandle(Window.Handle).Controls.Add(chart);
-
             serialPort = new SerialPort();
             Console.WriteLine("Available Ports:");
             foreach (string s in SerialPort.GetPortNames())
@@ -488,6 +494,7 @@ namespace Rollerball
             // because they have a fairly small number of particles per effect.
             smokePlume = new SmokePlumeParticleSystem(this, 80);    // max 80 balls explode at once :)
             Components.Add(smokePlume);
+            InitChart();
 
             base.Initialize();
         }
@@ -613,7 +620,10 @@ namespace Rollerball
             soundEffectCountDown = Content.Load<SoundEffect>("counting");
 
             video = Content.Load<Video>("crowd");
+//            videoBackground = Content.Load<Video>("backgroundvideo");
             videoPlayer = new Microsoft.Xna.Framework.Media.VideoPlayer();
+//            videoPlayerBackground = new Microsoft.Xna.Framework.Media.VideoPlayer();
+
             gameState = GameState.SHOWHIGHSCORES;
         }
 
@@ -628,7 +638,7 @@ namespace Rollerball
             scoreListType = 0;
             scoreListElapsed = 0;
             scoreYPosition = 0;
-            InitChart();
+            ResetChart();
         }
 
         /// <summary>
@@ -639,7 +649,6 @@ namespace Rollerball
         {
             videoCapture.Dispose();
             SaveHighscores();
-            // TODO: Unload any non ContentManager content here
         }
 
         private void AddScore(int playerNumber, int score)
@@ -732,7 +741,7 @@ namespace Rollerball
                         {
                             chart.Visible = false;
                             winningPlayerNumber = players.IndexOf(player);
-                            playingVideo = true;
+                            playingVideoWinner = true;
                             videoPlayer.Play(video);
                         }
                         numPlayersFinished++;
@@ -754,7 +763,7 @@ namespace Rollerball
                             if (videoPlayer.State == MediaState.Playing)
                             {
                                 videoPlayer.Stop();
-                                playingVideo = false;
+                                playingVideoWinner = false;
                             }
                             soundEffectFinished.Play();
                         }
@@ -890,6 +899,10 @@ namespace Rollerball
             // The time since Update was called last.
             GameTimeMilliSeconds += Convert.ToInt32(elapsedTime.TotalMilliseconds);
             ballRotation += (float)elapsedTime.TotalSeconds * 1.5f;
+//            if (videoPlayerBackground.State == MediaState.Stopped)
+//            {
+//                videoPlayerBackground.Play(videoBackground);
+//            }
 
             UpdateChart();
             AddRandomBalls();
@@ -982,6 +995,7 @@ namespace Rollerball
                 }
                 else if(gameState.Equals(GameState.SHOWHIGHSCORES))
                 {
+//                    videoPlayerBackground.Play(videoBackground);
                     gameState = GameState.COUNTDOWN;
                     ResetPlayers();
                     //                    InitGame();
@@ -999,11 +1013,11 @@ namespace Rollerball
                 }
             }
 
-            if (playingVideo)
+            if (playingVideoWinner)
             {
                 if (videoPlayer.State == MediaState.Stopped)
                 {
-                    playingVideo = false;
+                    playingVideoWinner = false;
                 }
             }
 
@@ -1082,6 +1096,11 @@ namespace Rollerball
         {
             SpriteBatch.Draw(textureBackground, new Vector2(0, 0), Microsoft.Xna.Framework.Color.White);
 
+//            if (videoPlayerBackground.State != MediaState.Stopped)
+//            {
+//                SpriteBatch.Draw(videoPlayerBackground.GetTexture(), /*new Microsoft.Xna.Framework.Rectangle(0, 0, 1920, 320)*/ new Vector2(0,4), new Microsoft.Xna.Framework.Rectangle(0, 0, videoPlayerBackground.GetTexture().Width, videoPlayerBackground.GetTexture().Height), Microsoft.Xna.Framework.Color.White);
+//            }
+          
             int seconds = (GameTimeMilliSeconds / 1000) % 10;
             int seconds10 = (GameTimeMilliSeconds / 10000) % 6;
             int minutes = (GameTimeMilliSeconds / 60000) % 10;
@@ -1096,6 +1115,7 @@ namespace Rollerball
                 SpriteBatch.Draw(player.Texture, new Vector2(player.X, player.Y), new Microsoft.Xna.Framework.Rectangle(0, 0, player.Texture.Width, player.Texture.Height), Microsoft.Xna.Framework.Color.White, 0f, new Vector2(0, 0), 0.5f, SpriteEffects.None, 0f);
             }
 
+            smokePlume.DrawSmoke();
             if (gameState.Equals(GameState.PLAYING))
             {
                 foreach (Ball ball in balls.ToList())
@@ -1109,7 +1129,7 @@ namespace Rollerball
                 }
             }
 
-            if (videoPlayer.State != MediaState.Stopped)
+            if (playingVideoWinner)
             {
                 SpriteBatch.Draw(videoPlayer.GetTexture(), new Microsoft.Xna.Framework.Rectangle(0, 650, 960, 500), new Microsoft.Xna.Framework.Rectangle(0, 0, videoPlayer.GetTexture().Width, videoPlayer.GetTexture().Height), Microsoft.Xna.Framework.Color.White, 0.0f, new Vector2(0, 0), SpriteEffects.FlipHorizontally, 0.0f);
                 SpriteBatch.Draw(videoPlayer.GetTexture(), new Microsoft.Xna.Framework.Rectangle(960, 650, 960, 500), Microsoft.Xna.Framework.Color.White);
@@ -1278,7 +1298,7 @@ namespace Rollerball
                 {
                     DrawCountDown();
                 }
-                if (playingVideo)
+                if (playingVideoWinner)
                 {
                     int pos = (int)(gameTime.TotalGameTime.TotalMilliseconds / 5 % 255);
                     if (pos > 128)

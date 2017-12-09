@@ -456,3 +456,8 @@
 /processorParam:TextureFormat=Color
 /build:shattered.png
 
+#begin backgroundvideo.wmv
+/importer:WmvImporter
+/processor:VideoProcessor
+/build:backgroundvideo.wmv
+

@@ -307,16 +307,8 @@ namespace Rollerball
             base.Update(gameTime);
         }
 
-        /// <summary>
-        /// overriden from DrawableGameComponent, Draw will use ParticleSampleGame's 
-        /// sprite batch to render all of the active particles.
-        /// </summary>
-        public override void Draw(GameTime gameTime)
+        public void DrawSmoke()
         {
-            // tell sprite batch to begin, using the spriteBlendMode specified in
-            // initializeConstants
-            game.SpriteBatch.Begin(SpriteSortMode.Deferred, blendState);
-
             foreach (Particle p in particles)
             {
                 // skip inactive particles
@@ -349,6 +341,19 @@ namespace Rollerball
                 game.SpriteBatch.Draw(texture, p.Position, null, color,
                     p.Rotation, origin, scale, SpriteEffects.None, 0.0f);
             }
+        }
+
+        /// <summary>
+        /// overriden from DrawableGameComponent, Draw will use ParticleSampleGame's 
+        /// sprite batch to render all of the active particles.
+        /// </summary>
+        public override void Draw(GameTime gameTime)
+        {
+            // tell sprite batch to begin, using the spriteBlendMode specified in
+            // initializeConstants
+            game.SpriteBatch.Begin(SpriteSortMode.Deferred, blendState);
+
+            // UpdateSmoke();
 
             game.SpriteBatch.End();
 
