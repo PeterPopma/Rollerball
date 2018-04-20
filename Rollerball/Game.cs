@@ -144,12 +144,13 @@ namespace Rollerball
             graphics.PreferredBackBufferWidth = 1920;
             graphics.IsFullScreen = false;      // note: when using windows controls we can't use this option to go fullscreen.
             graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
-            /*
+            
+            // Fullscreen
             Form.FromHandle(Window.Handle).FindForm().WindowState = FormWindowState.Maximized;
             Form.FromHandle(Window.Handle).FindForm().FormBorderStyle = FormBorderStyle.None;
             Form.FromHandle(Window.Handle).FindForm().TopMost = true;
             SetWindowPos(Window.Handle, IntPtr.Zero, 0, 0, GetSystemMetrics(0), GetSystemMetrics(1), 64);            
-            */
+            
         }
 
         Highscore ReadHighscore(StreamReader srFile)

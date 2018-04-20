@@ -77,7 +77,7 @@
     <None Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\DirectShowLibV2-1\src\DirectShowLib-2008.csproj">
+    <ProjectReference Include="..\DirectShowLibV2-1\src\DirectShowLib-2008.csproj">
       <Project>{ce009bfa-5ef6-4153-b2a1-2fa79698a9ae}</Project>
       <Name>DirectShowLib-2008</Name>
     </ProjectReference>

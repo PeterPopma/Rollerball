@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rollerball", "Rollerball\Rollerball.csproj", "{A35DC26A-469E-4FC6-94C0-B0650B7A7ABC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectShowLib-2008", "..\DirectShowLibV2-1\src\DirectShowLib-2008.csproj", "{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectShowLib-2008", "DirectShowLibV2-1\src\DirectShowLib-2008.csproj", "{CE009BFA-5EF6-4153-B2A1-2FA79698A9AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,5 +32,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3DE93D0A-BB2C-4233-BDF2-1CF4E0122858}
 	EndGlobalSection
 EndGlobal
