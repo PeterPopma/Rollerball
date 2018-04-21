@@ -40,10 +40,12 @@ namespace Rollerball
         const int SPEED_MULTIPLIER = 1;
         int winningPlayerNumber;
         int numPlayersFinished;
+        int testPhotoTime;
         private List<Player> players = new List<Player>();
         Video video;
         Microsoft.Xna.Framework.Media.VideoPlayer videoPlayer;
         bool playingVideoWinner = false;
+        bool AIPlayersActive = false;
         Texture2D textureBackground;
         Texture2D textureBackgroundHighscores;
         Texture2D textureFont;
@@ -69,6 +71,7 @@ namespace Rollerball
         Texture2D textureVideo;
         Texture2D textureVolgendeX2;
         Texture2D textureX2;
+        Texture2D[] textureTestPhoto = new Texture2D[4];
 
         Texture2D[] textureMatrix;
         List<ShatteredPart> shattersBird;
@@ -93,10 +96,14 @@ namespace Rollerball
         List<Highscore> highscoresAll = new List<Highscore>();
         double requestRestartTime;
         bool enterPressed;
+        bool pressedT;
         bool pressedA;
         bool pressedS;
         bool pressedD;
         bool pressedF;
+        bool pressedP;
+        string message;
+        int messageTime;
 
         bool doubleScoreActive;
         int doubleScoreValue;
@@ -291,6 +298,16 @@ namespace Rollerball
             players[1].Photo = videoCapture.getFrameRectangle(new Microsoft.Xna.Framework.Rectangle(170, 200, 150, 150));
             players[2].Photo = videoCapture.getFrameRectangle(new Microsoft.Xna.Framework.Rectangle(320, 200, 150, 150));
             players[3].Photo = videoCapture.getFrameRectangle(new Microsoft.Xna.Framework.Rectangle(470, 200, 150, 150));
+        }
+
+        void MakeTestPhoto()
+        {
+            for (int k = 0; k < 4; k++)
+            {
+                textureTestPhoto[k] = videoCapture.getFrameRectangle(new Microsoft.Xna.Framework.Rectangle(20 + 150*k, 200, 150, 150));
+            }
+
+            testPhotoTime = 150;
         }
 
         private void UpdateHighscores()
@@ -651,6 +668,7 @@ namespace Rollerball
             scoreYPosition = 0;
             doubleScoreActive = false;
             doubleScoreValue = 0;
+            messageTime = 0;
             ResetChart();
         }
 
@@ -728,7 +746,7 @@ namespace Rollerball
         {
             Random rnd = new Random();
             int k = rnd.Next(1000);
-            if (k < 4)
+            if (k > 0 && k < 4)
             {
                 AddScore(k, (rnd.Next(3)+1));
             }
@@ -850,6 +868,12 @@ namespace Rollerball
             }
         }
 
+        private void DisplayMessage(string message)
+        {
+            this.message = message;
+            messageTime = 100;
+        }
+
         private void Explode(Ball ball)
         {
             if(doubleScoreValue==-1)
@@ -932,7 +956,10 @@ namespace Rollerball
             }
 
             UpdateChart();
-            AddRandomBalls();
+            if (AIPlayersActive)
+            {
+                AddRandomBalls();
+            }
             UpdatePlayers();
             UpdateBalls();
             UpdateShatters();
@@ -974,6 +1001,32 @@ namespace Rollerball
                 enterPressed = false;
             }
 
+            if (!pressedT && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.T))
+            {
+                pressedT = true;
+                AIPlayersActive = !AIPlayersActive;
+                if (AIPlayersActive)
+                {
+                    DisplayMessage("AI players ON");
+                }
+                else
+                {
+                    DisplayMessage("AI players OFF");
+                }
+            }
+            if (pressedT && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.T))
+            {
+                pressedT = false;
+            }
+            if (!pressedP && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.P))
+            {
+                pressedP = true;
+                MakeTestPhoto();
+            }
+            if (pressedP && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.P))
+            {
+                pressedP = false;
+            }
             if (!pressedA && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.A))
             {
                 pressedA = true;
@@ -1385,15 +1438,19 @@ namespace Rollerball
             {
                 SpriteBatch.Draw(textureGeenArduino, new Vector2(700, 50), new Microsoft.Xna.Framework.Rectangle(0, 0, textureGeenArduino.Width, textureGeenArduino.Height), Microsoft.Xna.Framework.Color.White);
             }
-            /*
-            for(int k=0; k< shattersElephant.Count; k++)
+            if( testPhotoTime>0)
             {
-                SpriteBatch.Draw(shattersElephant[k].Texture, new Vector2(400+ shattersElephant[k].XOffset, 400+ shattersElephant[k].YOffset), new Microsoft.Xna.Framework.Rectangle(0, 0, shattersElephant[k].Texture.Width, shattersElephant[k].Texture.Height), Microsoft.Xna.Framework.Color.White);
+                testPhotoTime--;
+                for (int k=0; k<4; k++) {
+                    SpriteBatch.Draw(textureTestPhoto[k], new Vector2(100 + k*300, 50), new Microsoft.Xna.Framework.Rectangle(0, 0, textureTestPhoto[k].Width, textureTestPhoto[k].Height), Microsoft.Xna.Framework.Color.White);
+                }
             }
-            for (int k = 0; k < shattersTurtle.Count; k++)
+            if ( messageTime>0 )
             {
-                SpriteBatch.Draw(shattersTurtle[k].Texture, new Vector2(800 + shattersTurtle[k].XOffset, 400 + shattersTurtle[k].YOffset), new Microsoft.Xna.Framework.Rectangle(0, 0, shattersTurtle[k].Texture.Width, shattersTurtle[k].Texture.Height), Microsoft.Xna.Framework.Color.White);
-            }*/
+                messageTime--;
+                fontScore.Print(SpriteBatch, message, 30, 900);
+            }
+
 
             SpriteBatch.End();
 
