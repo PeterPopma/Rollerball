@@ -63,7 +63,7 @@ namespace Rollerball
         Texture2D textureAlpha;
         Texture2D textureCountDown;
         Texture2D textureLaser;
-        Texture2D textureStartbutton;
+        Texture2D textureVoerBalIn;
         Texture2D textureArrow;
         Texture2D textureGeenArduino;
         Texture2D textureGewonnen;
@@ -152,12 +152,13 @@ namespace Rollerball
             graphics.IsFullScreen = false;      // note: when using windows controls we can't use this option to go fullscreen.
             graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             
+            /*
             // Fullscreen
             Form.FromHandle(Window.Handle).FindForm().WindowState = FormWindowState.Maximized;
             Form.FromHandle(Window.Handle).FindForm().FormBorderStyle = FormBorderStyle.None;
             Form.FromHandle(Window.Handle).FindForm().TopMost = true;
             SetWindowPos(Window.Handle, IntPtr.Zero, 0, 0, GetSystemMetrics(0), GetSystemMetrics(1), 64);            
-            
+            */
         }
 
         Highscore ReadHighscore(StreamReader srFile)
@@ -614,7 +615,7 @@ namespace Rollerball
             textureAlpha = Content.Load<Texture2D>("alpha");
             textureCountDown = Content.Load<Texture2D>("countdown");
             textureLaser = Content.Load<Texture2D>("laser");
-            textureStartbutton = Content.Load<Texture2D>("startbutton");
+            textureVoerBalIn = Content.Load<Texture2D>("voerbalin");
             textureArrow = Content.Load<Texture2D>("arrow");
             textureGeenArduino = Content.Load<Texture2D>("geenarduino");
             textureGewonnen = Content.Load<Texture2D>("gewonnen");
@@ -657,6 +658,7 @@ namespace Rollerball
 
         void InitGame()
         {
+            ResetPlayers();
             gameState = GameState.PLAYING;
             GameTimeMilliSeconds = 0;
             requestRestartTime = 0;
@@ -684,7 +686,13 @@ namespace Rollerball
 
         private void AddScore(int playerNumber, int score)
         {
-            if (!gameState.Equals(GameState.PLAYING))
+            if (gameState.Equals(GameState.SHOWHIGHSCORES))
+            {
+                gameState = GameState.COUNTDOWN;
+                soundEffectCountDown.Play();
+                return;
+            }
+            else if (!gameState.Equals(GameState.PLAYING))
             {
                 return;
             }
@@ -701,11 +709,6 @@ namespace Rollerball
                 players[playerNumber].Score = 44;
             }
 
-            if (players[playerNumber].X > 1800)
-            {
-                return;
-            }
-
             for (int k = 0; k < score; k++)
             {
                 if (k == 0)
@@ -718,7 +721,10 @@ namespace Rollerball
                 }
             }
 
-            players[playerNumber].Moving += score*40*SPEED_MULTIPLIER*DOUBLE_SCORE;
+            if (players[playerNumber].X <= 1800)
+            {
+                players[playerNumber].Moving += score * 40 * SPEED_MULTIPLIER * DOUBLE_SCORE;
+            }
 
         }
 
@@ -1070,17 +1076,11 @@ namespace Rollerball
                 receivedResetSignal = false;
                 if (gameState.Equals(GameState.REQUESTRESTART))
                 {
-                    ResetPlayers();
                     InitGame();
                 }
                 else if(gameState.Equals(GameState.SHOWHIGHSCORES))
                 {
-                    //                    videoPlayerBackground.Play(videoBackground);
-                    videoPlayer.Play(video);        // PP_TEMP
-
                     gameState = GameState.COUNTDOWN;
-                    ResetPlayers();
-                    //                    InitGame();
                     soundEffectCountDown.Play();
                 }
                 else if (gameState.Equals(GameState.PLAYING))
@@ -1351,11 +1351,10 @@ namespace Rollerball
             Microsoft.Xna.Framework.Color color = new Microsoft.Xna.Framework.Color(255, 255, 255, alpha);
             SpriteBatch.End();
             SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
-            SpriteBatch.Draw(textureStartbutton, new Vector2(1400, 650), new Microsoft.Xna.Framework.Rectangle(0, 0, textureStartbutton.Width, 328), color);
-            SpriteBatch.Draw(textureStartbutton, new Vector2(1400, 970), new Microsoft.Xna.Framework.Rectangle(0, 328, textureStartbutton.Width, textureStartbutton.Height), color/*Microsoft.Xna.Framework.Color.White*/);
+            SpriteBatch.Draw(textureVoerBalIn, new Vector2(1400, 450), new Microsoft.Xna.Framework.Rectangle(0, 0, textureVoerBalIn.Width, textureVoerBalIn.Height), color/*Microsoft.Xna.Framework.Color.White*/);
             SpriteBatch.End();
             SpriteBatch.Begin();
-            SpriteBatch.Draw(textureArrow, new Vector2(1520, 520 - (int)(0.5*alpha)), new Microsoft.Xna.Framework.Rectangle(0, 0, textureArrow.Width, textureArrow.Height), Microsoft.Xna.Framework.Color.White);
+            SpriteBatch.Draw(textureArrow, new Vector2(1536, 820 - (int)(0.5*alpha)), new Microsoft.Xna.Framework.Rectangle(0, 0, textureArrow.Width, textureArrow.Height), Microsoft.Xna.Framework.Color.White);
 
         }
 

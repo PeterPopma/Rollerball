@@ -396,18 +396,6 @@
 /processorParam:Quality=Best
 /build:idea.mp3
 
-#begin startbutton.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:startbutton.png
-
 #begin arrow.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -495,4 +483,16 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:bell_x2.mp3
+
+#begin voerbalin.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:voerbalin.png
 
