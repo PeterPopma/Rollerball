@@ -37,7 +37,7 @@ namespace Rollerball
         GameState gameState = GameState.SHOWHIGHSCORES;
         const int MAX_PLAYERS = 4;
         const int X_STARTVALUE = 4;
-        const int SPEED_MULTIPLIER = 1;
+        int speedMultiplier = 1;             // Use to speed up total game
         int winningPlayerNumber;
         int numPlayersFinished;
         int testPhotoTime;
@@ -97,6 +97,7 @@ namespace Rollerball
         double requestRestartTime;
         bool enterPressed;
         bool pressedT;
+        bool pressedM;
         bool pressedA;
         bool pressedS;
         bool pressedD;
@@ -432,6 +433,7 @@ namespace Rollerball
             chart.Series["Vogel"].Points.Clear();
             chart.Series["Hond"].Points.Clear();
             chart.Series["Finish"].Points.Clear();
+            secondsPlotted = 0;
         }
 
         void UpdateChart()
@@ -543,10 +545,10 @@ namespace Rollerball
                             AddScore(0, 1);
                             break;
                         case 66:
-                            AddScore(0, 2);
+                            AddScore(0, 3);
                             break;
                         case 67:
-                            AddScore(0, 3);
+                            AddScore(0, 2);
                             break;
                         case 68:
                             AddScore(1, 1);
@@ -698,7 +700,7 @@ namespace Rollerball
             }
 
             int DOUBLE_SCORE = doubleScoreActive ? 2 : 1;
-            players[playerNumber].Score += (score * SPEED_MULTIPLIER * DOUBLE_SCORE);
+            players[playerNumber].Score += (score * speedMultiplier * DOUBLE_SCORE);
             if(doubleScoreActive)
             {
                 doubleScoreActive = false;
@@ -723,7 +725,7 @@ namespace Rollerball
 
             if (players[playerNumber].X <= 1800)
             {
-                players[playerNumber].Moving += score * 40 * SPEED_MULTIPLIER * DOUBLE_SCORE;
+                players[playerNumber].Moving += score * 40 * speedMultiplier * DOUBLE_SCORE;
             }
 
         }
@@ -774,8 +776,8 @@ namespace Rollerball
             {
                 if (player.X <= 1800 && player.Moving > 0)
                 {
-                    player.Moving--;
-                    player.X++;
+                    player.Moving-= speedMultiplier;
+                    player.X+= speedMultiplier;
 
                     if (player.X>1800)
                     {
@@ -1007,6 +1009,20 @@ namespace Rollerball
                 enterPressed = false;
             }
 
+            if (!pressedM && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.M))
+            {
+                pressedM = true;
+                speedMultiplier *= 2;
+                if(speedMultiplier>8)
+                {
+                    speedMultiplier = 1;
+                }
+                DisplayMessage("Speed Multiplier: " + speedMultiplier);
+            }
+            if (pressedM && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.M))
+            {
+                pressedM = false;
+            }
             if (!pressedT && Keyboard.GetState().IsKeyDown(Microsoft.Xna.Framework.Input.Keys.T))
             {
                 pressedT = true;
