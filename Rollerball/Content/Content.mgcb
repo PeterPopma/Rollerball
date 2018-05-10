@@ -240,12 +240,6 @@
 /processorParam:Quality=Best
 /build:glassbreak.mp3
 
-#begin kidshoorah.mp3
-/importer:Mp3Importer
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:kidshoorah.mp3
-
 #begin poing.mp3
 /importer:Mp3Importer
 /processor:SoundEffectProcessor
@@ -495,4 +489,10 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:voerbalin.png
+
+#begin popcheer.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:popcheer.mp3
 

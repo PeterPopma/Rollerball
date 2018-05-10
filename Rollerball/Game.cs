@@ -41,6 +41,7 @@ namespace Rollerball
         int winningPlayerNumber;
         int numPlayersFinished;
         int testPhotoTime;
+        int AIPlayersLevel = 1000;          // Level of AI players; lower is better
         private List<Player> players = new List<Player>();
         Video video;
         Microsoft.Xna.Framework.Media.VideoPlayer videoPlayer;
@@ -111,6 +112,7 @@ namespace Rollerball
         Vector2 doubleScorePosition;
 
         int GameTimeMilliSecondsLastDoubleScore;
+        int GameTimeMilliSecondsLastAIPlayerCalibration;
         Font fontNormal;
         Font fontScore;
         int scoreYPosition;
@@ -645,7 +647,7 @@ namespace Rollerball
             fontNormal.Initialize(textureFont);
 
             soundEffectPoing = Content.Load<SoundEffect>("poing");
-            soundEffectLaugh = Content.Load<SoundEffect>("kidshoorah");
+            soundEffectLaugh = Content.Load<SoundEffect>("popcheer");
             soundEffectPop = Content.Load<SoundEffect>("idea");
             soundEffectGlass = Content.Load<SoundEffect>("glassbreak");
             soundEffectFinished = Content.Load<SoundEffect>("finished");
@@ -753,7 +755,7 @@ namespace Rollerball
         void AddRandomBalls()
         {
             Random rnd = new Random();
-            int k = rnd.Next(1000);
+            int k = rnd.Next(AIPlayersLevel);
             if (k > 0 && k < 4)
             {
                 AddScore(k, (rnd.Next(3)+1));
@@ -777,7 +779,8 @@ namespace Rollerball
                 if (player.X <= 1800 && player.Moving > 0)
                 {
                     player.Moving-= speedMultiplier;
-                    player.X+= speedMultiplier;
+                    player.X += speedMultiplier;
+                    player.YOffset = (int)(Math.Sin(player.Moving%20 / 20.0* Math.PI)*10);
 
                     if (player.X>1800)
                     {
@@ -950,6 +953,35 @@ namespace Rollerball
             players.Add(new Player("Hond", X_STARTVALUE, 430, textureDog, textureBallDog, new Color(255, 100, 0)));
         }
 
+        bool HumanPlayerIsFirst()
+        {
+            bool isFirst = true;
+            for(int k=1; k<4; k++)
+            {
+                if(players[k].Score> players[0].Score)
+                {
+                    isFirst = false;
+                    break;
+                }
+            }
+            return isFirst;
+        }
+
+        bool HumanPlayerIsLast()
+        {
+            bool isLast = true;
+            for (int k = 1; k < 4; k++)
+            {
+                if (players[k].Score < players[0].Score)
+                {
+                    isLast = false;
+                    break;
+                }
+            }
+            return isLast;
+        }
+
+
         private void UpdateGame(TimeSpan elapsedTime)
         {
             // The time since Update was called last.
@@ -966,6 +998,19 @@ namespace Rollerball
             UpdateChart();
             if (AIPlayersActive)
             {
+                if (GameTimeMilliSeconds - GameTimeMilliSecondsLastAIPlayerCalibration > 5000)     // every 5 sec.
+                {
+                    GameTimeMilliSecondsLastAIPlayerCalibration = GameTimeMilliSeconds;
+                    if (HumanPlayerIsFirst() && AIPlayersLevel>100)
+                    {
+                        AIPlayersLevel -= 100;
+                    }
+                    if (HumanPlayerIsLast() && AIPlayersLevel<3000)
+                    {
+                        AIPlayersLevel += 100;
+                    }
+                }
+
                 AddRandomBalls();
             }
             UpdatePlayers();
@@ -1035,6 +1080,10 @@ namespace Rollerball
                 {
                     DisplayMessage("AI players OFF");
                 }
+            }
+            if (gameState.Equals(GameState.PLAYING) && AIPlayersActive)
+            {
+                DisplayMessage("AI level: " + (3000 - AIPlayersLevel)/ 100);
             }
             if (pressedT && Keyboard.GetState().IsKeyUp(Microsoft.Xna.Framework.Input.Keys.T))
             {
@@ -1220,7 +1269,7 @@ namespace Rollerball
 
             foreach (Player player in players)
             {
-                SpriteBatch.Draw(player.Texture, new Vector2(player.X, player.Y), new Microsoft.Xna.Framework.Rectangle(0, 0, player.Texture.Width, player.Texture.Height), Microsoft.Xna.Framework.Color.White, 0f, new Vector2(0, 0), 0.5f, SpriteEffects.None, 0f);
+                SpriteBatch.Draw(player.Texture, new Vector2(player.X, player.Y - player.YOffset), new Microsoft.Xna.Framework.Rectangle(0, 0, player.Texture.Width, player.Texture.Height), Microsoft.Xna.Framework.Color.White, 0f, new Vector2(0, 0), 0.5f, SpriteEffects.None, 0f);
             }
 
             smokePlume.DrawSmoke();
@@ -1382,30 +1431,28 @@ namespace Rollerball
                 alpha = 0;
             }
             Microsoft.Xna.Framework.Color color = new Microsoft.Xna.Framework.Color(255, 255, 255, alpha);
+            int X_SIZE = 40;       // ratio 2:3
+            int Y_SIZE = 60;       // ratio 2:3
+
             if (countdownLetter==5)
             {
-                // ratio 2:3
-                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - 100 * countdownPhase), (int)(390 - 150 * countdownPhase), (int)(200+200*countdownPhase), (int)(300+300*countdownPhase)), new Microsoft.Xna.Framework.Rectangle(0, 0, 214, 319), color);
+                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - X_SIZE * countdownPhase), (int)(390 - Y_SIZE * countdownPhase), (int)(200 + X_SIZE * 2 * countdownPhase), (int)(300 + Y_SIZE * 2 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(0, 0, 214, 319), color);
             }
             if (countdownLetter == 4)
             {
-                // ratio 2:3
-                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - 100 * countdownPhase), (int)(390 - 150 * countdownPhase), (int)(200 + 200 * countdownPhase), (int)(300 + 300 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(214, 0, 266, 319), color);
+                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - X_SIZE * countdownPhase), (int)(390 - Y_SIZE * countdownPhase), (int)(200 + X_SIZE * 2 * countdownPhase), (int)(300 + Y_SIZE * 2 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(214, 0, 266, 319), color);
             }
             if (countdownLetter == 3)
             {
-                // ratio 2:3
-                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - 100 * countdownPhase), (int)(390 - 150 * countdownPhase), (int)(200 + 200 * countdownPhase), (int)(300 + 300 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(480, 0, 222, 319), color);
+                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - X_SIZE * countdownPhase), (int)(390 - Y_SIZE * countdownPhase), (int)(200 + X_SIZE * 2 * countdownPhase), (int)(300 + Y_SIZE * 2 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(480, 0, 222, 319), color);
             }
             if (countdownLetter == 2)
             {
-                // ratio 2:3
-                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - 100 * countdownPhase), (int)(390 - 150 * countdownPhase), (int)(200 + 200 * countdownPhase), (int)(300 + 300 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(702, 0, 232, 319), color);
+                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(860 - X_SIZE * countdownPhase), (int)(390 - Y_SIZE * countdownPhase), (int)(200 + X_SIZE * 2 * countdownPhase), (int)(300 + Y_SIZE * 2 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(702, 0, 232, 319), color);
             }
             if (countdownLetter == 1)
             {
-                // ratio 2:3
-                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(800 - 100 * countdownPhase), (int)(390 - 150 * countdownPhase), (int)(200 + 200 * countdownPhase), (int)(300 + 300 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(936, 0, 178, 319), color);
+                SpriteBatch.Draw(textureCountDown, new Microsoft.Xna.Framework.Rectangle((int)(800 - X_SIZE * countdownPhase), (int)(390 - Y_SIZE * countdownPhase), (int)(200 + X_SIZE * 2 * countdownPhase), (int)(300 + Y_SIZE * 2 * countdownPhase)), new Microsoft.Xna.Framework.Rectangle(936, 0, 178, 319), color);
             }
         }
 

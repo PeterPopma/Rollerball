@@ -12,6 +12,7 @@ namespace Rollerball
     {
         int x;
         int y;
+        int yOffset;
         int score;
         int moving;
         int gameTimeMilliSeconds;
@@ -160,5 +161,7 @@ namespace Rollerball
                 color = value;
             }
         }
+
+        public int YOffset { get => yOffset; set => yOffset = value; }
     }
 }
